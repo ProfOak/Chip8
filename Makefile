@@ -1,12 +1,20 @@
 CC=gcc
 SOURCES=main.c chip8.c chip8.h
-EXECUTABLE=chip8.exe
-FLAGS=-o $(EXECUTABLE)
 
+ifeq ($(OS),Windows_NT)
+	EXECUTABLE=chip8.exe
+else
+	EXECUTABLE=chip8
+endif
+
+CFLAGS=-o $(EXECUTABLE)
 all: build
 
 build: $(SOURCES)
-	$(CC) $(FLAGS) $(SOURCES)
+	$(CC) $(CFLAGS) $(SOURCES)
+
+debug: $(SOURCES)
+	$(CC) -g $(CFLAGS) $(SOURCES)
 
 clean: $(EXECUTABLE)
-	rm $(EXECUTABLE)
+	rm -f $(EXECUTABLE)
