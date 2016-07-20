@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include "graphics.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,10 +22,14 @@ int main(int argc, char *argv[]) {
 
     free( filename );
 
-    for ( int i = 0; i < 15; i++ ) {
-        // emu one cycle at a time
+
+    gfx_init();
+    for ( int i = 0; i < 20; i++ ) {
+        gfx_get_key();
         c8_emulate_cycle();
     }
+
+    gfx_close();
 
     return 0;
 }

@@ -60,7 +60,7 @@ void c8_init( char * filename ) {
     buffer_size = ftell( fp );
     fseek( fp, 0, SEEK_SET );
 
-    buffer = ( char * ) malloc( sizeof(char) * buffer_size );
+    buffer = ( unsigned char * ) malloc( sizeof( char ) * buffer_size );
     fread( buffer, 1, buffer_size, fp );
     fclose( fp );
     // end IO
@@ -119,7 +119,7 @@ void c8_emulate_cycle( void ) {
 
         case 0x3000: // 0x3XNN
             // Skips the next instruction if VX equals NN
-            pc += (V[X] == opcode & 0x00FF) ? 4 : 2;
+            pc += V[X] == ( opcode & 0x00FF ) ? 4 : 2;
         break;
 
         case 0x4000: // 0x4XNN

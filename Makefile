@@ -1,5 +1,5 @@
 CC=gcc
-SOURCES=main.c chip8.c chip8.h
+SOURCES=main.c chip8.c chip8.h graphics.c graphics.h
 
 ifeq ($(OS),Windows_NT)
 	EXECUTABLE=chip8.exe
@@ -7,7 +7,7 @@ else
 	EXECUTABLE=chip8
 endif
 
-CFLAGS=-o $(EXECUTABLE)
+CFLAGS=-o $(EXECUTABLE) -lSDL2 -std=c11 -Wall
 all: build
 
 build: $(SOURCES)
