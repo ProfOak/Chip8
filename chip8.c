@@ -1,10 +1,10 @@
 #include "chip8.h"
 
 int key_press;
-int draw_flag, pixel; // drawing
+int draw_flag, pixel;                      // drawing
 
 unsigned short x, y, xline, yline, height; // drawing
-unsigned short width = 8; // drawing
+unsigned short width = 8;                  // drawing
 
 unsigned short opcode;
 unsigned short I;
@@ -16,7 +16,7 @@ unsigned char V[16];
 unsigned char gfx[ 64*32 ];
 unsigned char delay_timer;
 unsigned char sound_timer;
-unsigned char key[16]; // keystrokes
+unsigned char key[16];      // keypress
 unsigned char memory[4096];
 
 /*
@@ -48,21 +48,21 @@ unsigned char chip8_fontset[80] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-void c8_init(char * filename) {
+void c8_init( char * filename ) {
     int buffer_size;
     unsigned char * buffer;
     FILE * fp;
 
     // store contents of ROM into buffer
-    fp = fopen(filename, "rb");
-    fseek(fp, 0, SEEK_END);
+    fp = fopen( filename, "rb" );
+    fseek( fp, 0, SEEK_END );
 
-    buffer_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    buffer_size = ftell( fp );
+    fseek( fp, 0, SEEK_SET );
 
-    buffer = (char *) malloc(sizeof(char) * buffer_size);
-    fread(buffer, 1, buffer_size, fp);
-    fclose(fp);
+    buffer = ( char * ) malloc( sizeof(char) * buffer_size );
+    fread( buffer, 1, buffer_size, fp );
+    fclose( fp );
     // end IO
 
     pc     = 0x200; // starts at 0x200
@@ -71,30 +71,30 @@ void c8_init(char * filename) {
     sp     = 0;
 
     // load fonts into memory
-    for (int i = 0; i < 80; i++)
+    for ( int i = 0; i < 80; i++ )
         memory[i] = chip8_fontset[i];
 
     // load rom into memory
-    for (int i = 0; i < buffer_size; i++) {
+    for ( int i = 0; i < buffer_size; i++ ) {
         memory[i + 512] = buffer[i];
     }
 
     // 0xCXNN uses a random number
-    srand(time(NULL));
+    srand( time( NULL ) );
 }
 
-void c8_emulate_cycle(void) {
+void c8_emulate_cycle( void ) {
     // get opcode
     opcode = memory[pc] << 8 | memory[pc + 1];
 
-    printf("CURRENT OPCODE: 0x%X\n", opcode);
+    printf( "CURRENT OPCODE: 0x%X\n", opcode );
     // decode opcode
-    switch (opcode & 0xF000) {
+    switch ( opcode & 0xF000 ) {
 
-        switch (opcode & 0x000F) {
+        switch ( opcode & 0x000F ) {
             case 0x0000: // 0x00E0
                 // clear the screen
-                for (int i = 0; i < 2048; i++)
+                for ( int i = 0; i < 2048; i++ )
                     gfx[i] = 0x0;
                 draw_flag = 1;
                 pc += 2;
@@ -124,12 +124,12 @@ void c8_emulate_cycle(void) {
 
         case 0x4000: // 0x4XNN
             // Skips the next instruction if VX doesn't equal NN
-            pc += (V[X] != NN) ? 4 : 2;
+            pc += V[X] != NN ? 4 : 2;
         break;
 
         case 0x5000: //0x5XY0
             // Skips the next instruction if VX equals VY
-            pc += (V[X] == V[Y]) ? 4 : 2;
+            pc += V[X] == V[Y] ? 4 : 2;
         break;
 
         case 0x6000: // 0x6XNN
@@ -213,7 +213,7 @@ void c8_emulate_cycle(void) {
 
         case 0x9000: // 0x9XY0
             // Skips the next instruction if VX doesn't equal VY
-            pc += (V[X] != V[Y]) ? 4 : 2;
+            pc += V[X] != V[Y] ? 4 : 2;
         break;
 
         case 0xA000: // 0xANNN
@@ -229,7 +229,7 @@ void c8_emulate_cycle(void) {
 
         case 0xC000: // 0xCXNN
             // Sets VX to the result of a bitwise and operation on a random number and NN
-            V[X] = (rand() * 0xFF) & NN;
+            V[X] = ( rand() * 0xFF ) & NN;
             pc += 2;
         break;
 
@@ -246,11 +246,11 @@ void c8_emulate_cycle(void) {
             y = V[Y];
             height = V[N];
 
-            for (yline = 0; yline < height; yline++) {
+            for ( yline = 0; yline < height; yline++ ) {
                 pixel = memory[I + yline];
 
-                for (xline = 0; xline < width; xline++) {
-                    if ((pixel & (0x80 >> xline)) != 0) {
+                for ( xline = 0; xline < width; xline++ ) {
+                    if ( (pixel & (0x80 >> xline)) != 0 ) {
                         if (gfx[(x + xline + ((y+yline) * 64))] == 1) {
                             V[0xF] = 1;
                         }
@@ -267,12 +267,12 @@ void c8_emulate_cycle(void) {
             switch (opcode & 0x00FF) {
                 case 0x009E: // 0xFX9E
                     // Skips the next instruction if the key stored in VX is pressed
-                    pc += (key[V[X]] != 0) ? 4 : 2;
+                    pc += key[V[X]] != 0 ? 4 : 2;
                 break;
 
                 case 0x00A1: // 0xFX0A
                     // Skips the next instruction if the key stored in VX isn't pressed
-                    pc += (key[V[X]] == 0) ? 4 : 2;
+                    pc += key[V[X]] == 0 ? 4 : 2;
                 break;
             }
 
@@ -287,13 +287,13 @@ void c8_emulate_cycle(void) {
 
                 case 0x000A: // 0xFX0A
                     // A key press is awaited, and then stored in VX
-                    for (int i = 0; i < 16; i++) {
-                        if (key[i] != 0) {
+                    for ( int i = 0; i < 16; i++ ) {
+                        if ( key[i] != 0 ) {
                             V[X] = i;
                             key_press = 1;
                         }
                     }
-                    if (!key_press) {
+                    if ( !key_press ) {
                         return;
                     }
 
@@ -314,7 +314,7 @@ void c8_emulate_cycle(void) {
 
                 case 0x001E: // 0xFX1E
                     // Adds VX to I
-                    V[0xF] = ((0xFF - V[X]) > I) ? 1 : 0;
+                    V[0xF] = ( 0xFF - V[X] ) > I ? 1 : 0;
                     I += V[X];
                     pc += 2;
                 break;
@@ -339,22 +339,22 @@ void c8_emulate_cycle(void) {
                      *                I  I+1 I+2
                      * decimal digit [0] (0) {0}
                      */
-                    memory[I]   = V[X] / 100;
-                    memory[I+1] = (V[X] / 10) % 10;
-                    memory[I+2] = (V[X] % 100) % 10;
+                    memory[I]   =   V[X] / 100;
+                    memory[I+1] = ( V[X] / 10 ) % 10;
+                    memory[I+2] = ( V[X] % 100 ) % 10;
                     pc += 2;
                 break;
 
                 case 0x0055: // 0xFX55
                     // Stores V0 to VX in memory starting at address I
-                    for (int i = 0; i < X; i++)
+                    for ( int i = 0; i < X; i++ )
                         memory[I + i] = V[i];
                     pc += 2;
                 break;
 
                 case 0x0065: // 0xFX65
                     // Fills V0 to VX with values from memory starting at address I
-                    for (int i = 0; i < X; i++)
+                    for ( int i = 0; i < X; i++ )
                         V[i] = memory[I + i];
                     pc += 2;
                 break;
@@ -362,16 +362,16 @@ void c8_emulate_cycle(void) {
         break;
 
         default:
-            printf("Unknown opcode: 0x%X\n", opcode);
+            printf( "Unknown opcode: 0x%X\n", opcode );
     }
 
 
     // update timers
-    if (delay_timer > 0)
+    if ( delay_timer > 0 )
         --delay_timer;
-    if (sound_timer > 0) {
-        if (sound_timer == 1)
-            printf("beep?\n");
+    if ( sound_timer > 0 ) {
+        if ( sound_timer == 1 )
+            printf( "beep?\n" );
         --sound_timer;
     }
 }
