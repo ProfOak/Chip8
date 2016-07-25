@@ -84,10 +84,15 @@ void c8_init( char * filename ) {
 }
 
 void c8_emulate_cycle( void ) {
+
+    int tmp;
+
     // get opcode
     opcode = memory[pc] << 8 | memory[pc + 1];
 
-    printf( "CURRENT OPCODE: 0x%X\n", opcode );
+    pc += 2;
+
+    printf( "CURRENT OPCODE: 0x%X    |    %d\n", opcode, pc );
     // decode opcode
     switch ( opcode & 0xF000 ) {
 
@@ -97,13 +102,11 @@ void c8_emulate_cycle( void ) {
                 for ( int i = 0; i < 2048; i++ )
                     gfx[i] = 0x0;
                 draw_flag = 1;
-                pc += 2;
             break;
 
             case 0x000E: // 0x00EE
                 // returns from subroutine
                 pc = stack[--sp];
-                pc += 2;
             break;
         }
         case 0x1000: // 0x1NNN
@@ -113,35 +116,36 @@ void c8_emulate_cycle( void ) {
 
         case 0x2000: // 0x2NNN
             // call subroutine at address NNN
-            stack[sp++] = pc;
+            stack[sp++] = pc - 2; // because I increased it already
             pc = NNN;
         break;
 
         case 0x3000: // 0x3XNN
             // Skips the next instruction if VX equals NN
-            pc += V[X] == ( opcode & 0x00FF ) ? 4 : 2;
+            if ( opcode & 0x00FF )
+                pc += V[X] + 2;
         break;
 
         case 0x4000: // 0x4XNN
             // Skips the next instruction if VX doesn't equal NN
-            pc += V[X] != NN ? 4 : 2;
+            if ( V[X] != NN )
+                pc += 2;
         break;
 
         case 0x5000: //0x5XY0
             // Skips the next instruction if VX equals VY
-            pc += V[X] == V[Y] ? 4 : 2;
+            if ( V[X] == V[Y] )
+                pc += 2;
         break;
 
         case 0x6000: // 0x6XNN
             // Sets VX to NN
             V[X] = NN;
-            pc += 2;
         break;
 
         case 0x7000: // 0x7XNN
             // Adds NN to VX
             V[X] += NN;
-            pc += 2;
         break;
 
         case 0x8000:
@@ -149,77 +153,72 @@ void c8_emulate_cycle( void ) {
                 case 0x0000: // 0x8000
                     // Sets VX to the value of VY
                     V[X] = V[Y];
-                    pc += 2;
                 break;
 
                 case 0x0001: // 0x8XY1
                     // Sets VX to the value of VY
                     V[X] = V[X] | V[Y];
-                    pc += 2;
                 break;
 
                 case 0x002: // 0x8XY2
                     // Sets VX to VX and VY
                     V[X] = V[X] & V[Y];
-                    pc += 2;
                 break;
 
                 case 0x003: // 0x8XY3
                     // Sets VX to VX xor VY
                     V[X] = V[X] ^ V[Y];
-                    pc += 2;
                 break;
 
                 case 0x0004: // 0x8XY4
                     // Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't
                     V[X] += V[Y];
-                    pc += 2;
                 break;
 
                 case 0x0005: // 0x8XY5
                     // VY is subtracted from VX
                     // VF is set to 0 when there's a borrow, and 1 when there isn't
-                    V[0xF] = V[X] < V[Y] ? 1 : 0;
+                    tmp  = V[X] < V[Y] ? 1 : 0;
                     V[X] = V[X] - V[Y];
-                    pc += 2;
+                    V[0xF] = tmp;
                 break;
 
                 case 0x0006: // 0x8XY6
                     // Shifts VX right by one
                     // VF is set to the value of the least significant bit of VX before the shift
-                    V[0xF] = V[X] & 0x01;
+                    tmp = V[X] & 0x01;
                     V[X] >>= 1;
-                    pc += 2;
+                    V[0xF] = tmp;
 
                 break;
 
                 case 0x0007: // 0x8XY7
                     // Sets VX to VY minus VX
                     // VF is set to 0 when there's a borrow, and 1 when there isn't
-                    V[0xF] = V[X] < V[Y] ? 1 : 0;
-                    V[X] = V[Y] - V[X];
-                    pc += 2;
+                    tmp    = V[X] < V[Y] ? 1 : 0;
+                    V[X]   = V[Y] - V[X];
+                    V[0xF] = tmp;
                 break;
 
                 case 0x000E: // 0x8XYE
                     // Shifts VX left by one
                     // VF is set to the value of the most significant bit of VX before the shift
-                    V[0xF] = V[X] >> 7;
-                    V[X] = V[X] << 1;
-                    pc += 2;
+                    tmp    = V[X] >> 7;
+                    V[X]   = V[X] << 1;
+                    V[0xF] = tmp;
                 break;
             }
         break;
 
         case 0x9000: // 0x9XY0
             // Skips the next instruction if VX doesn't equal VY
-            pc += V[X] != V[Y] ? 4 : 2;
+            if ( V[X] != V[Y] )
+                pc += 2;
         break;
 
         case 0xA000: // 0xANNN
             // set address to NNN
             I = NNN;
-            pc += 2;
         break;
 
         case 0xB000: // 0xBNNN
@@ -230,7 +229,6 @@ void c8_emulate_cycle( void ) {
         case 0xC000: // 0xCXNN
             // Sets VX to the result of a bitwise and operation on a random number and NN
             V[X] = ( rand() * 0xFF ) & NN;
-            pc += 2;
         break;
 
         case 0xD000: // 0xDXYN drawing
@@ -260,19 +258,20 @@ void c8_emulate_cycle( void ) {
             }
 
             draw_flag = 1;
-            pc += 2;
         break;
 
         case 0xE000: // key presses
             switch (opcode & 0x00FF) {
                 case 0x009E: // 0xFX9E
                     // Skips the next instruction if the key stored in VX is pressed
-                    pc += key[V[X]] != 0 ? 4 : 2;
+                    if ( key[V[X]] != 0 )
+                        pc +=  2;
                 break;
 
                 case 0x00A1: // 0xFX0A
                     // Skips the next instruction if the key stored in VX isn't pressed
-                    pc += key[V[X]] == 0 ? 4 : 2;
+                    if ( key[V[X]] == 0 )
+                        pc += 2;
                 break;
             }
 
@@ -282,7 +281,6 @@ void c8_emulate_cycle( void ) {
                 case 0x0007a: // 0xFX07
                     //Sets VX to the value of the delay timer
                     V[X] = delay_timer;
-                    pc += 2;
                 break;
 
                 case 0x000A: // 0xFX0A
@@ -297,13 +295,11 @@ void c8_emulate_cycle( void ) {
                         return;
                     }
 
-                    pc += 2;
                 break;
 
                 case 0x0015: // 0xFX15
                     //Sets the delay timer to VX
                     delay_timer = V[X];
-                    pc += 2;
                 break;
 
                 case 0x0018: // 0xFX18
@@ -316,14 +312,12 @@ void c8_emulate_cycle( void ) {
                     // Adds VX to I
                     V[0xF] = ( 0xFF - V[X] ) > I ? 1 : 0;
                     I += V[X];
-                    pc += 2;
                 break;
 
                 case 0x0029: // 0xFX29
                     // Sets I to the location of the sprite for the character in VX
                     // Characters 0-F (in hexadecimal) are represented by a 4x5 font
                     I = V[X] * 0x5;
-                    pc += 2;
                 break;
 
                 case 0x0033: // 0xFX33
@@ -342,21 +336,18 @@ void c8_emulate_cycle( void ) {
                     memory[I]   =   V[X] / 100;
                     memory[I+1] = ( V[X] / 10 ) % 10;
                     memory[I+2] = ( V[X] % 100 ) % 10;
-                    pc += 2;
                 break;
 
                 case 0x0055: // 0xFX55
                     // Stores V0 to VX in memory starting at address I
                     for ( int i = 0; i < X; i++ )
                         memory[I + i] = V[i];
-                    pc += 2;
                 break;
 
                 case 0x0065: // 0xFX65
                     // Fills V0 to VX with values from memory starting at address I
                     for ( int i = 0; i < X; i++ )
                         V[i] = memory[I + i];
-                    pc += 2;
                 break;
             }
         break;
