@@ -1,5 +1,5 @@
 CC=gcc
-SOURCES=main.c chip8.c chip8.h graphics.c graphics.h
+SOURCES=chip8.c chip8.h graphics.c graphics.h main.c
 
 ifeq ($(OS),Windows_NT)
 	EXECUTABLE=chip8.exe

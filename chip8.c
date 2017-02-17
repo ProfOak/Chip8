@@ -13,11 +13,12 @@ unsigned short stack[16];
 unsigned short sp;
 
 unsigned char V[16];
-unsigned char gfx[ 64*32 ];
 unsigned char delay_timer;
 unsigned char sound_timer;
-unsigned char key[16];      // keypress
 unsigned char memory[4096];
+
+unsigned char gfx[ 64*32 ];
+unsigned char key[16];      // keypress
 
 /*
  * fontset example: the number 0
@@ -92,7 +93,8 @@ void c8_emulate_cycle( void ) {
 
     pc += 2;
 
-    printf( "CURRENT OPCODE: 0x%X    |    %d\n", opcode, pc );
+    // todo: jumptables are cooler tbh
+    // printf( "CURRENT OPCODE: 0x%X    |    %d\n", opcode, pc );
     // decode opcode
     switch ( opcode & 0xF000 ) {
 

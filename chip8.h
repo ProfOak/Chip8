@@ -15,4 +15,7 @@
 void c8_init( char * filename );
 void c8_emulate_cycle( void );
 
+extern unsigned char gfx[ 64*32 ];
+extern unsigned char key[16];      // keypress
+
 #endif

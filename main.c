@@ -19,12 +19,12 @@ int main(int argc, char *argv[]) {
     strncpy( filename,  argv[1], strlen( argv[1] ) );
 
     c8_init( filename );
-
     free( filename );
 
-
     gfx_init();
-    for ( int i = 0; i < 20; i++ ) {
+    while ( 1 ) {
+        gfx_update(gfx);
+
         gfx_get_key();
         c8_emulate_cycle();
     }
