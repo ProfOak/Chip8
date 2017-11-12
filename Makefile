@@ -7,7 +7,7 @@ else
 	EXECUTABLE=chip8
 endif
 
-CFLAGS=-o $(EXECUTABLE) -lSDL2 -std=c11 -Wall
+CFLAGS=-o $(EXECUTABLE) -lSDL2 -std=c11 -Wall -Wextra
 all: build
 
 build: $(SOURCES)
