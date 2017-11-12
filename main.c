@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     puts("C8 init");
 
     // testing...
-    for (int i = 0; i < 70; i++) {
+    for (int i = 0; i < 200; i++) {
         c8_emulate_cycle();
     }
 

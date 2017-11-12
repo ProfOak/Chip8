@@ -119,7 +119,7 @@ void c8_emulate_cycle(void) {
 
     pc += 2;
 
-     printf("CURRENT OPCODE: 0x%X    |    %d\n", opcode, pc);
+     printf("CURRENT OPCODE: 0x%X    |    PC: %d\n", opcode, pc);
     // decode opcode
     switch (opcode & 0xF000) {
 
@@ -133,7 +133,7 @@ void c8_emulate_cycle(void) {
 
             case 0x000E: // 0x00EE
                 // returns from subroutine
-                pc = stack[--sp];
+                pc = stack[sp--];
             break;
 
             default:
@@ -146,7 +146,7 @@ void c8_emulate_cycle(void) {
 
         case 0x2000: // 0x2NNN
             // call subroutine at address NNN
-            stack[sp++] = pc - 2; // because I increased it already
+            stack[++sp] = pc;
             pc = NNN;
         break;
 
@@ -187,17 +187,17 @@ void c8_emulate_cycle(void) {
 
                 case 0x0001: // 0x8XY1
                     // Sets VX to VX or VY
-                    V[X] = V[X] | V[Y];
+                    V[X] |= V[Y];
                 break;
 
                 case 0x002: // 0x8XY2
                     // Sets VX to VX and VY
-                    V[X] = V[X] & V[Y];
+                    V[X] &= V[Y];
                 break;
 
                 case 0x003: // 0x8XY3
                     // Sets VX to VX xor VY
-                    V[X] = V[X] ^ V[Y];
+                    V[X] ^= V[Y];
                 break;
 
                 case 0x0004: // 0x8XY4
@@ -205,7 +205,7 @@ void c8_emulate_cycle(void) {
                     // VF is set to 1 when there's a carry,
                     // and to 0 when there isn't
                     tmp = 0;
-                    if ((int)V[X] + (int)V[Y] > sizeof(char)) {
+                    if ((int)V[X] + (int)V[Y] > 0xFF) {
                         tmp = 1;
                     }
                     V[X] += V[Y];
@@ -214,7 +214,8 @@ void c8_emulate_cycle(void) {
 
                 case 0x0005: // 0x8XY5
                     // VY is subtracted from VX
-                    // VF is set to 0 when there's a borrow, and 1 when there isn't
+                    // VF is set to 0 when there's a borrow,
+                    // and 1 when there isn't
                     tmp  = V[X] < V[Y] ? 1 : 0;
                     V[X] -= V[Y];
                     V[0xF] = tmp;
@@ -222,27 +223,26 @@ void c8_emulate_cycle(void) {
 
                 case 0x0006: // 0x8XY6
                     // Shifts VX right by one
-                    // VF is set to the value of the least significant bit of VX before the shift
-                    tmp = V[X] & 0x01;
+                    // VF is set to the value of the least significant
+                    // bit of VX before the shift
+                    V[0xF] = V[X] & 0x01;
                     V[X] >>= 1;
-                    V[0xF] = tmp;
 
                 break;
 
                 case 0x0007: // 0x8XY7
                     // Sets VX to VY minus VX
-                    // VF is set to 0 when there's a borrow, and 1 when there isn't
-                    tmp    = V[X] < V[Y] ? 1 : 0;
+                    // VF is set to 0 when there's a borrow,
+                    // and 1 when there isn't
+                    V[0xF] = V[X] < V[Y] ? 1 : 0;
                     V[X]   = V[Y] - V[X];
-                    V[0xF] = tmp;
                 break;
 
                 case 0x000E: // 0x8XYE
                     // Shifts VX left by one
                     // VF is set to the value of the most significant bit of VX before the shift
-                    tmp    = V[X] >> 7;
+                    V[0xF] = V[X] >> 7;
                     V[X]   = V[X] << 1;
-                    V[0xF] = tmp;
                 break;
 
                 default:
@@ -355,7 +355,7 @@ void c8_emulate_cycle(void) {
 
                 case 0x001E: // 0xFX1E
                     // Adds VX to I
-                    V[0xF] = (0xFF - V[X]) > I ? 1 : 0;
+                    // V[0xF] = (0xFF - V[X]) > I ? 1 : 0;
                     I += V[X];
                 break;
 
@@ -390,7 +390,8 @@ void c8_emulate_cycle(void) {
                 break;
 
                 case 0x0065: // 0xFX65
-                    // Fills V0 to VX with values from memory starting at address I
+                    // Fills V0 to VX with values from memory
+                    // starting at address I
                     for (int i = 0; i < X; i++)
                         V[i] = memory[I + i];
                 break;
