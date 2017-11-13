@@ -3,13 +3,12 @@
 int key_press = 0;
 
 // drawing
-int draw_flag = 0;
+int GFX_DRAW_FLAG = 0;
 int pixel = 0;
+int screen_coord = 0;
 
 unsigned short x = 0;
 unsigned short y = 0;
-unsigned short xline = 0;
-unsigned short yline = 0;
 unsigned short height = 0;
 unsigned short width = 8;
 // drawing
@@ -123,22 +122,25 @@ void c8_emulate_cycle(void) {
     // decode opcode
     switch (opcode & 0xF000) {
 
-        switch (opcode & 0x000F) {
-            case 0x0000: // 0x00E0
-                // clear the screen
-                for (int i = 0; i < 2048; i++)
-                    gfx[i] = 0x0;
-                draw_flag = 1;
-            break;
+        case 0x0000:
+            switch (opcode & 0x00FF) {
+                case 0x00E0: // 0x00E0
+                    // clear the screen
+                    for (int i = 0; i < 2048; i++)
+                        gfx[i] = 0x0;
+                    GFX_DRAW_FLAG = 1;
+                break;
 
-            case 0x000E: // 0x00EE
-                // returns from subroutine
-                pc = stack[sp--];
-            break;
+                case 0x00EE: // 0x00EE
+                    // returns from subroutine
+                    pc = stack[sp--];
+                break;
 
-            default:
-                printf("Unknown opcode: 0x%X\n", opcode);
-        }
+                default:
+                    printf("Unknown opcode: 0x%X\n", opcode);
+            }
+        break;
+
         case 0x1000: // 0x1NNN
             // Jumps to address NNN
             pc = NNN;
@@ -280,24 +282,22 @@ void c8_emulate_cycle(void) {
              * if any screen pixels are flipped from set to unset when the sprite
              * is drawn, and to 0 if that doesn't happen.
              */
-            x = V[X];
-            y = V[Y];
-            height = V[N];
 
-            for (yline = 0; yline < height; yline++) {
-                pixel = memory[I + yline];
+            for (x = 0; x < 8; x++) {
+                for (y = 0; y < N; y++) {
+                    pixel = memory[I + y];
 
-                for (xline = 0; xline < width; xline++) {
-                    if ((pixel & (0x80 >> xline)) != 0) {
-                        if (gfx[(x + xline + ((y+yline) * 64))] == 1) {
-                            V[0xF] = 1;
-                        }
-                        gfx[x+xline + ((y+yline) * 64)] ^= 1;
+                    if ((pixel & (0x80 >> x)) != 0) {
+                        // TODO: get rid of magic number
+                        screen_coord = (x*64) + V[X] + y+V[Y];
+
+                        V[0xF] = gfx[screen_coord] ? 0 : 1;
+                        gfx[screen_coord] ^= 1;
                     }
                 }
             }
 
-            draw_flag = 1;
+            GFX_DRAW_FLAG = 1;
         break;
 
         case 0xE000: // key presses

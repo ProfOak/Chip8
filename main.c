@@ -27,20 +27,17 @@ int main(int argc, char *argv[]) {
 
     puts("C8 init");
 
+    gfx_init();
     // testing...
-    for (int i = 0; i < 200; i++) {
+    // while (GFX_IS_RUNNING) {
+    for (int i = 0; i < 1000; i++) {
+        if (GFX_DRAW_FLAG) {
+            gfx_update(gfx);
+        }
         c8_emulate_cycle();
+        //gfx_get_key();
     }
-
-    /*
-     * TODO: reinstate when opcodes function properly
-     gfx_init();
-     while (true) {
-         gfx_update(gfx);
-         c8_emulate_cycle();
-         gfx_get_key();
-     gfx_close();
-    */
+    gfx_close();
 
     return 0;
 }

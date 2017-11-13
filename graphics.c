@@ -3,38 +3,50 @@
 SDL_Window* window     = NULL;
 SDL_Renderer* renderer = NULL;
 
-int WIDTH  = 640;
-int HEIGHT = 320;
-int SCALE  = 10; // original res is 64x32
+bool GFX_IS_RUNNING = true;
+
+// original res is 64x32
+int WIDTH  = 64;
+int HEIGHT = 32;
+
+// add option to scale/increase size
+int SCALE  = 10;
 
 int gfx_init() {
 
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+        GFX_IS_RUNNING = false;
         return exit_with_error("SDL could not initialize");
     }
 
     SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, 0, &window, &renderer);
     SET_WHITE();
     SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 
     return 1;
 }
 
 void gfx_update(char * gfx) {
 
-    for (int x = 0; x < 32; x++) {
-        for (int y = 0; y < 64; y++) {
+    int screen_coord = 0;
+    for (int x = 0; x < HEIGHT; x++) {
+        for (int y = 0; y < WIDTH; y++) {
+            screen_coord = x*HEIGHT + y;
 
-            if (gfx[x*32 + y] == 1) {
+            printf("%d", gfx[screen_coord]);
+            if (gfx[screen_coord] == 1) {
                 SET_BLACK();
             } else {
                 SET_WHITE();
             }
 
             SDL_RenderDrawPoint(renderer, x, y);
-            //fill_square(x*SCALE, y*SCALE);
         }
+        puts("");
     }
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 }
 
 
@@ -65,6 +77,7 @@ void gfx_close() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    GFX_IS_RUNNING = false;
 }
 
 int exit_with_error(char *str) {
