@@ -4,27 +4,26 @@ int key_press = 0;
 
 // drawing
 int GFX_DRAW_FLAG = 0;
-int pixel = 0;
-int screen_coord = 0;
+int pixel         = 0;
+int screen_coord  = 0;
 
 unsigned short x = 0;
 unsigned short y = 0;
-unsigned short height = 0;
-unsigned short width = 8;
 // drawing
 
 unsigned short opcode = 0;
-unsigned short I = 0;
-unsigned short pc = 0;
+unsigned short I      = 0;
+unsigned short pc     = 0;
+unsigned short sp     = 0;
 unsigned short stack[16];
-unsigned short sp = 0;
 
 unsigned char V[16];
 unsigned char delay_timer = 0;
 unsigned char sound_timer = 0;
 unsigned char memory[4096];
 
-unsigned char gfx[64*32];
+// height / width
+unsigned char gfx[64][32];
 unsigned char key[16];      // keypress
 
 /*
@@ -36,8 +35,7 @@ unsigned char key[16];      // keypress
  * 0X90    1001 0000    1  1
  * 0XF0    1111 0000    1111
  */
-unsigned char chip8_fontset[80] =
-{
+unsigned char chip8_fontset[80] = {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
   0x20, 0x60, 0x20, 0x20, 0x70, // 1
   0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -56,7 +54,7 @@ unsigned char chip8_fontset[80] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-void c8_init(char * filename) {
+void c8_init(char * filename, int width, int height) {
     int buffer_size;
     unsigned char * buffer;
     FILE * fp;
@@ -85,8 +83,10 @@ void c8_init(char * filename) {
     for (int i = 0; i < 16; i++) {
         V[i] = 0;
     }
-    for (int i = 0; i < 64*32; i++) {
-        gfx[i] = 0;
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            gfx[x][y] = 0;
+        }
     }
     for (int i = 0; i < 4096; i++) {
         memory[i] = 0;
@@ -111,6 +111,10 @@ void c8_init(char * filename) {
 
 void c8_emulate_cycle(void) {
 
+
+    int width  = 64;
+    int height = 32;
+
     int tmp;
 
     // get opcode
@@ -118,7 +122,7 @@ void c8_emulate_cycle(void) {
 
     pc += 2;
 
-     printf("CURRENT OPCODE: 0x%X    |    PC: %d\n", opcode, pc);
+    printf("CURRENT OPCODE: 0x%X    |    PC: %d\n", opcode, pc);
     // decode opcode
     switch (opcode & 0xF000) {
 
@@ -126,8 +130,11 @@ void c8_emulate_cycle(void) {
             switch (opcode & 0x00FF) {
                 case 0x00E0: // 0x00E0
                     // clear the screen
-                    for (int i = 0; i < 2048; i++)
-                        gfx[i] = 0x0;
+                    for (int x = 0; x < width; x++) {
+                        for (int y = 0; y < height; y++) {
+                            gfx[x][y] = 0x0;
+                        }
+                    }
                     GFX_DRAW_FLAG = 1;
                 break;
 
@@ -283,16 +290,14 @@ void c8_emulate_cycle(void) {
              * is drawn, and to 0 if that doesn't happen.
              */
 
-            for (x = 0; x < 8; x++) {
-                for (y = 0; y < N; y++) {
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < N; x++) {
                     pixel = memory[I + y];
 
                     if ((pixel & (0x80 >> x)) != 0) {
-                        // TODO: get rid of magic number
-                        screen_coord = (x*64) + V[X] + y+V[Y];
 
-                        V[0xF] = gfx[screen_coord] ? 0 : 1;
-                        gfx[screen_coord] ^= 1;
+                        gfx[x + V[X]][y + V[Y]] ^= 1;
+                        V[0xF] = (gfx[x + V[X]][y + V[Y]]) ? 0 : 1;
                     }
                 }
             }
@@ -410,8 +415,6 @@ void c8_emulate_cycle(void) {
     if (delay_timer > 0)
         --delay_timer;
     if (sound_timer > 0) {
-        if (sound_timer == 1)
-            printf( "beep?\n" );
         --sound_timer;
     }
 }
