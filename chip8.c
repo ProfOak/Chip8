@@ -374,16 +374,18 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
 
                 case 0x0055: // 0xFX55
                     // Stores V0 to VX in memory starting at address I
-                    for (int i = 0; i < X; i++) {
-                        memory[I + i] = V[i];
+                    for (int i = 0; i <= X; i++) {
+                        memory[I] = V[i];
+                        I++;
                     }
                 break;
 
                 case 0x0065: // 0xFX65
                     // Fills V0 to VX with values from memory
                     // starting at address I
-                    for (int i = 0; i < X; i++) {
-                        V[I + i] = memory[i];
+                    for (int i = 0; i <= X; i++) {
+                        V[i] = memory[I];
+                        I++;
                     }
                 break;
 
