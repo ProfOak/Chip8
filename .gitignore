@@ -1,4 +1,4 @@
-*swp
-PONG
 chip8
-*exe
+*.exe
+*.log
+*.swp

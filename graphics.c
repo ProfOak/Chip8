@@ -1,22 +1,27 @@
 #include "graphics.h"
 
-SDL_Window* window     = NULL;
-SDL_Renderer* renderer = NULL;
+SDL_Window * window     = NULL;
+SDL_Renderer * renderer = NULL;
+SDL_Rect rect;
 
+const int scale = 10;
+int square_x = 0;
+int square_y = 0;
 bool GFX_IS_RUNNING = true;
 
-int gfx_init(int width, int height) {
+void gfx_init(unsigned char gfx[WIDTH][HEIGHT]) {
+
+    clear_screen(gfx);
 
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         exit_with_error("SDL could not initialize");
     }
 
-    printf("%d, %d\n", width, height);
     window = SDL_CreateWindow("Chip8",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
-                              width,
-                              height,
+                              WIDTH*scale,
+                              HEIGHT*scale,
                               SDL_WINDOW_OPENGL);
     if (!window) {
         exit_with_error("SDL_CreateWindow");
@@ -27,47 +32,41 @@ int gfx_init(int width, int height) {
         exit_with_error("SDL_CreateRenderer");
     }
 
-    if(SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255)) {
-        exit_with_error("SDL_SetRenderDrawColor");
-    }
+    SET_WHITE();
 
     if (SDL_RenderClear(renderer)) {
         exit_with_error("SDL_RenderClear error");
     }
     SDL_RenderPresent(renderer);
 
-    return 0;
 }
 
-void gfx_update(char gfx[64][32]) {
-    int width  = 64;
-    int height = 32;
+void gfx_update(unsigned char gfx[WIDTH][HEIGHT]) {
 
+    for (int x = 0; x < HEIGHT; x++) {
+        for (int y = 0; y < WIDTH; y++) {
+            square_x = x*scale;
+            square_y = y*scale;
 
-    for (int x = 0; x < height; x++) {
-        for (int y = 0; y < width; y++) {
             if (gfx[y][x] == 1) {
-                printf(" ");
-                /*printf("%d", gfx[y][x]);*/
-                if(SDL_SetRenderDrawColor(renderer,   0,   0  , 0, 255)) {
-                    exit_with_error("SDL_SetRenderDrawColor");
-                }
+                SET_WHITE();
             } else {
-                printf("%d", gfx[y][x]);
-                if(SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255)) {
-                    exit_with_error("SDL_SetRenderDrawColor");
-                }
+                SET_BLACK();
             }
 
-            if (SDL_RenderDrawPoint(renderer, y, x)) {
-                exit_with_error("SDL_RenderDrawPoint");
-            }
+            rect = (SDL_Rect) {
+                .x = y*scale,
+                .y = x*scale,
+                .h = scale,
+                .w = scale,
+            };
+            SDL_RenderDrawRect(renderer, &rect);
+            SDL_RenderFillRect(renderer, &rect);
         }
-        puts("");
-
     }
     SDL_RenderPresent(renderer);
 }
+
 
 void gfx_get_key(void) {
     SDL_Event event;
@@ -83,10 +82,10 @@ void gfx_get_key(void) {
 }
 
 void gfx_close(void) {
+    GFX_IS_RUNNING = false;
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    GFX_IS_RUNNING = false;
 }
 
 void exit_with_error(char *str) {

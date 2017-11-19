@@ -5,12 +5,17 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 
-#define SET_BLACK() SDL_SetRenderDrawColor(renderer,   0,   0  , 0, 255);
-#define SET_WHITE() SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+#include "utils.h"
 
-int  gfx_init(int width, int height);
+
+#define SET_BLACK() if(SDL_SetRenderDrawColor(renderer,   0,   0  , 0, 255)) \
+    exit_with_error("SetRenderDrawColor")
+#define SET_WHITE() if(SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255)) \
+    exit_with_error("SetRenderDrawColor")
+
+void gfx_init(unsigned char gfx[WIDTH][HEIGHT]);
+void gfx_update(unsigned char gfx[WIDTH][HEIGHT]);
 void gfx_close(void);
-void gfx_update(char gfx[64][32]);
 void gfx_get_key(void);
 
 void exit_with_error(char *);

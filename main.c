@@ -7,10 +7,12 @@
 #include "graphics.h"
 
 
-int file_exists(char *f);
+int file_exists(char * f);
 void usage(void);
 
 int main(int argc, char *argv[]) {
+
+    unsigned char gfx[WIDTH][HEIGHT];
 
     if (argc != 2 || !file_exists(argv[1])) {
         printf("Invalid rom file\n");
@@ -19,27 +21,25 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Loading: %s\n", argv[1]);
-
-    c8_init(argv[1], 64, 32);
-
     puts("C8 init");
+    c8_init(argv[1], gfx);
+    gfx_init(gfx);
 
-    gfx_init(64, 32);
-    // testing...
-    //while (GFX_IS_RUNNING) {
-    for (int i = 0; i < 1000; i++) {
+    while (GFX_IS_RUNNING) {
         if (GFX_DRAW_FLAG) {
             gfx_update(gfx);
         }
-        c8_emulate_cycle();
-        //gfx_get_key();
+
+        c8_emulate_cycle(gfx);
+        gfx_get_key();
     }
+    puts("Exiting...");
     gfx_close();
 
     return 0;
 }
 
-int file_exists(char *f) {
+int file_exists(char * f) {
     return access(f, F_OK) != -1;
 }
 
