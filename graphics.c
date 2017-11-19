@@ -45,8 +45,6 @@ void gfx_update(unsigned char gfx[WIDTH][HEIGHT]) {
 
     for (int x = 0; x < HEIGHT; x++) {
         for (int y = 0; y < WIDTH; y++) {
-            square_x = x*scale;
-            square_y = y*scale;
 
             if (gfx[y][x] == 1) {
                 SET_WHITE();

@@ -25,7 +25,9 @@ int main(int argc, char *argv[]) {
     c8_init(argv[1], gfx);
     gfx_init(gfx);
 
-    while (GFX_IS_RUNNING) {
+    int i = 0;
+    while (GFX_IS_RUNNING && i < 250) {
+        printf("%d: ", i++);
         if (GFX_DRAW_FLAG) {
             gfx_update(gfx);
         }

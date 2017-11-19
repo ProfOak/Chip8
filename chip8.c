@@ -7,22 +7,20 @@ int GFX_DRAW_FLAG = 0;
 int pixel         = 0;
 int screen_coord  = 0;
 
-unsigned short x = 0;
-unsigned short y = 0;
-// drawing
-
+// cpu
 unsigned short opcode = 0;
 unsigned short I      = 0;
 unsigned short pc     = 0x200;
 unsigned short sp     = 0;
 unsigned short stack[16];
 
+// system parts
 unsigned char V[16];
 unsigned char delay_timer = 0;
 unsigned char sound_timer = 0;
 unsigned char memory[4096];
 
-// keypress
+// keyboard
 unsigned char key[16];
 
 /*
@@ -109,9 +107,9 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
     // get opcode
     opcode = memory[pc] << 8 | memory[pc + 1];
 
+    printf("PC=%d opcode=%x\n", pc, opcode);
     pc += 2;
 
-    // printf("CURRENT OPCODE: 0x%X    |    PC: %d\n", opcode, pc);
     // decode opcode
     switch (opcode & 0xF000) {
 
@@ -209,7 +207,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                     // VY is subtracted from VX
                     // VF is set to 0 when there's a borrow,
                     // and 1 when there isn't
-                    V[0xF] = V[X] >= V[Y] ? 1 : 0;
+                    V[0xF] = V[X] > V[Y] ? 0 : 1;
                     V[X] -= V[Y];
                 break;
 
@@ -226,7 +224,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                     // Sets VX to VY minus VX
                     // VF is set to 0 when there's a borrow,
                     // and 1 when there isn't
-                    V[0xF] = V[X] <= V[Y] ? 1 : 0;
+                    V[0xF] = V[X] < V[Y] ? 0 : 1;
                     V[X]   = V[Y] - V[X];
                 break;
 
@@ -235,7 +233,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                     // the result to VX. VF is set to the
                     // value of the most significant bit of VY before the shift
                     V[0xF] = V[Y] >> 7;
-                    V[X]   = V[Y] << 1;
+                    V[Y]   = V[Y] << 1;
                 break;
 
                 default:
@@ -276,8 +274,8 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
              * is drawn, and to 0 if that doesn't happen.
              */
 
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < N; x++) {
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < N; y++) {
                     pixel = memory[I + y];
 
                     if ((pixel & (0x80 >> x)) != 0) {
@@ -293,7 +291,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
 
         case 0xE000: // key presses
             switch (opcode & 0x00FF) {
-                case 0x009E: // 0xFX9E
+                case 0x009E: // 0xEX9E
                     // Skips the next instruction if the
                     // key stored in VX is pressed
                     if (key[V[X]] == 1) {
@@ -301,7 +299,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                     }
                 break;
 
-                case 0x00A1: // 0xFX0A
+                case 0x00A1: // 0xEXA1
                     // Skips the next instruction if the
                     // key stored in VX isn't pressed
                     if (key[V[X]] == 0) {
@@ -312,6 +310,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                 default:
                     unknown(opcode);
             }
+        break;
 
         case 0xF000:
             switch (opcode & 0x00FF) {
@@ -376,8 +375,7 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                 case 0x0055: // 0xFX55
                     // Stores V0 to VX in memory starting at address I
                     for (int i = 0; i < X; i++) {
-                        memory[I] = V[i];
-                        I += 1;
+                        memory[I + i] = V[i];
                     }
                 break;
 
@@ -385,10 +383,8 @@ void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
                     // Fills V0 to VX with values from memory
                     // starting at address I
                     for (int i = 0; i < X; i++) {
-                        V[i] = memory[I];
-                        I += 1;
+                        V[I + i] = memory[i];
                     }
-
                 break;
 
                 default:
