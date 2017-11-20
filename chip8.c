@@ -104,10 +104,15 @@ void c8_init(char * filename, unsigned char gfx[WIDTH][HEIGHT]) {
 void c8_emulate_cycle(unsigned char gfx[WIDTH][HEIGHT]) {
     /* Emulate a Chip8 cpu cycle */
 
+    // reset graphics draw flag
+    GFX_DRAW_FLAG = 0;
+
     // get opcode
     opcode = memory[pc] << 8 | memory[pc + 1];
 
-    printf("PC=%d opcode=%x\n", pc, opcode);
+    if (DEBUG) {
+        printf("PC=%d opcode=%x\n", pc, opcode);
+    }
     pc += 2;
 
     // decode opcode

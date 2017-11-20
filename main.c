@@ -6,13 +6,14 @@
 #include "chip8.h"
 #include "graphics.h"
 
-
-int file_exists(char * f);
-void usage(void);
+#define file_exists(f)  (access(f, F_OK) != -1)
+#define usage()         puts("Usage:"); \
+                        puts("    chip8 ROM_NAME");
 
 int main(int argc, char *argv[]) {
 
     unsigned char gfx[WIDTH][HEIGHT];
+    unsigned int i = 0;
 
     if (argc != 2 || !file_exists(argv[1])) {
         printf("Invalid rom file\n");
@@ -23,11 +24,13 @@ int main(int argc, char *argv[]) {
     printf("Loading: %s\n", argv[1]);
     puts("C8 init");
     c8_init(argv[1], gfx);
-    gfx_init(gfx);
+    gfx_init(gfx, argv[1]);
 
-    int i = 0;
-    while (GFX_IS_RUNNING && i < 250) {
-        printf("%d: ", i++);
+    while (GFX_IS_RUNNING) {
+        if (DEBUG) {
+            printf("%d: ", i++);
+        }
+
         if (GFX_DRAW_FLAG) {
             gfx_update(gfx);
         }
@@ -39,13 +42,4 @@ int main(int argc, char *argv[]) {
     gfx_close();
 
     return 0;
-}
-
-int file_exists(char * f) {
-    return access(f, F_OK) != -1;
-}
-
-void usage(void) {
-    puts("Usage:");
-    puts("    chip8 ROM_NAME");
 }

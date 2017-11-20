@@ -1,6 +1,7 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -21,4 +22,8 @@ void unknown(unsigned short opcode);
 extern int GFX_DRAW_FLAG;
 extern unsigned char key[16];      // keypress
 
+#endif
+
+#ifndef DEBUG
+#define DEBUG false
 #endif

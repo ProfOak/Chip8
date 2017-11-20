@@ -9,7 +9,9 @@ int square_x = 0;
 int square_y = 0;
 bool GFX_IS_RUNNING = true;
 
-void gfx_init(unsigned char gfx[WIDTH][HEIGHT]) {
+void gfx_init(unsigned char gfx[WIDTH][HEIGHT], char * filename) {
+
+    char window_title[50];
 
     clear_screen(gfx);
 
@@ -17,7 +19,8 @@ void gfx_init(unsigned char gfx[WIDTH][HEIGHT]) {
         exit_with_error("SDL could not initialize");
     }
 
-    window = SDL_CreateWindow("Chip8",
+    snprintf(window_title, 50, "Chip8: %s", basename(filename));
+    window = SDL_CreateWindow(window_title,
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
                               WIDTH*scale,
